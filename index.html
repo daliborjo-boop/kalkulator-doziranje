@@ -1,0 +1,740 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b5cff">
+<link rel="manifest" href="manifest.json">
+<title>Kalkulator doziranja</title>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#f4f6f8;color:#17202a}
+header{background:#0b5cff;color:#fff;padding:22px 18px 18px;position:sticky;top:0;z-index:3}
+h1{font-size:23px;margin:0 0 4px}.sub{opacity:.85;font-size:13px}
+.tabs{display:flex;gap:8px;padding:10px;background:#fff;position:sticky;top:76px;z-index:2;border-bottom:1px solid #ddd}
+.tabs button{flex:1;border:0;border-radius:10px;padding:11px 6px;background:#edf1f7;font-weight:700}
+.tabs button.active{background:#0b5cff;color:white}
+.wrap{padding:14px;max-width:760px;margin:auto}
+.card{background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px #0000000d}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:500px){.grid{grid-template-columns:1fr}}
+label{font-size:12px;font-weight:700;color:#5b6673;display:block;margin-bottom:6px}
+input,select{width:100%;padding:13px;border:1px solid #ccd3dc;border-radius:10px;font-size:16px;background:#fff}
+.metric{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee}
+.metric:last-child{border:0}.big{font-size:28px;font-weight:900}
+.pill{display:inline-block;padding:5px 9px;border-radius:999px;background:#edf1f7;font-size:12px;font-weight:700}
+.warn{background:#fff4d6;padding:12px;border-radius:10px;margin-top:10px}
+.table{width:100%;border-collapse:collapse;font-size:14px}
+.table th,.table td{padding:9px 5px;border-bottom:1px solid #eee;text-align:right}
+.table th:first-child,.table td:first-child{text-align:left}
+.section-title{font-size:18px;font-weight:900;margin:0 0 12px}
+.hidden{display:none}.muted{color:#667085;font-size:13px}
+.save{font-size:12px;color:#157347;margin-top:8px}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>⚙️ Kalkulator doziranja</h1>
+<div class="sub">Offline kalkulator za profesionalno pranje</div>
+</header>
+
+<nav class="tabs">
+<button class="active" data-tab="calc">Kalkulator</button>
+<button data-tab="retro">Retro potrošnja</button>
+<button data-tab="settings">Postavke</button>
+</nav>
+
+<main class="wrap">
+
+<section id="calc">
+
+<div class="card">
+<div class="section-title">Brzi obračun</div>
+
+<div class="grid">
+
+<div>
+<label>Kapacitet perilice (kg)</label>
+<input id="cap" type="number" min="0" step="0.1" value="33">
+</div>
+
+<div>
+<label>Program</label>
+<select id="prog"></select>
+</div>
+
+<div>
+<label>Popust (%)</label>
+<input id="disc" type="number" min="0" max="100" step="1" value="0">
+</div>
+
+</div>
+</div>
+
+<div class="card">
+
+<div class="metric">
+<span>Ukupno kemije</span>
+<strong id="grams">0 g</strong>
+</div>
+
+<div class="metric">
+<span>Puna cijena ciklusa</span>
+<strong id="full">0,00 €</strong>
+</div>
+
+<div class="metric">
+<span>Popust</span>
+<strong id="discval">0,00 €</strong>
+</div>
+
+<div class="metric">
+<span>ZA NAPLATU</span>
+<strong class="big" id="pay">0,00 €</strong>
+</div>
+
+</div>
+
+<div class="card">
+
+<table class="table">
+<thead>
+<tr>
+<th>Faza / proizvod</th>
+<th>g/kg</th>
+<th>Količina</th>
+<th>Cijena</th>
+</tr>
+</thead>
+
+<tbody id="calcRows"></tbody>
+</table>
+
+<div id="calcNote"></div>
+
+</div>
+
+</section>
+
+
+<section id="retro" class="hidden">
+
+<div class="card">
+
+<div class="section-title">Retrogradna kalkulacija</div>
+
+<p class="muted">
+Upiši broj izvršenih pranja za svaki program.
+Potrošnja se računa iz doziranja i kapaciteta.
+</p>
+
+<div id="retroInputs"></div>
+
+</div>
+
+<div class="card">
+
+<div class="section-title">Ukupna potrošnja</div>
+
+<table class="table">
+
+<thead>
+<tr>
+<th>Proizvod</th>
+<th>kg</th>
+<th>Kanisteri</th>
+<th>Cijeli kan.</th>
+</tr>
+</thead>
+
+<tbody id="retroRows"></tbody>
+
+</table>
+
+<div class="metric">
+<span>UKUPNO</span>
+<strong id="retroTotal">0 kg</strong>
+</div>
+
+</div>
+
+</section>
+
+
+<section id="settings" class="hidden">
+
+<div class="card">
+
+<div class="section-title">Proizvodi i cijene</div>
+
+<p class="muted">
+Vrijednosti se spremaju samo na ovom telefonu.
+</p>
+
+<div id="productSettings"></div>
+
+</div>
+
+
+<div class="card">
+
+<div class="section-title">Doziranja programa</div>
+
+<div id="doseSettings"></div>
+
+</div>
+
+
+<div class="card">
+
+<button id="reset">
+Vrati početne postavke
+</button>
+
+<div class="save" id="saved"></div>
+
+</div>
+
+</section>
+
+</main>
+
+
+<script>
+
+const INITIAL={
+
+programs:{
+
+"POSTELJINA OTKUHAVANJE":[
+["GLAVNO PRANJE","BASIC",5],
+["GLAVNO PRANJE","SURF",3.5],
+["GLAVNO PRANJE","OXYGEN",7],
+["ISPIRANJE","SOFT",5.5]
+],
+
+"POSTELJINA PREDPRANJE":[
+["PREDPRANJE","BASIC",3.5],
+["PREDPRANJE","SURF",3],
+["PREDPRANJE","CHLOR",0],
+["GLAVNO PRANJE","BASIC",5],
+["GLAVNO PRANJE","SURF",3.5],
+["GLAVNO PRANJE","OXYGEN",7],
+["ISPIRANJE","SOFT",5.5]
+],
+
+"POSTELJINA JAKO PRLJAVO/KLOR":[
+["PREDPRANJE","BASIC",4],
+["PREDPRANJE","SURF",3],
+["PREDPRANJE","CHLOR",10],
+["GLAVNO PRANJE","BASIC",6],
+["GLAVNO PRANJE","SURF",4],
+["GLAVNO PRANJE","OXYGEN",7],
+["ISPIRANJE","SOFT",7]
+],
+
+"BIJELI STOLJNJACI/KUHINJA":[
+["PREDPRANJE","BASIC",4],
+["PREDPRANJE","SURF",3],
+["PREDPRANJE","CHLOR",12],
+["GLAVNO PRANJE","BASIC",6],
+["GLAVNO PRANJE","SURF",4],
+["GLAVNO PRANJE","OXYGEN",7],
+["ISPIRANJE","SOFT",2]
+],
+
+"STOLJNJACI U BOJI":[
+["PREDPRANJE","BASIC",5],
+["PREDPRANJE","SURF",2],
+["PREDPRANJE","CHLOR",5],
+["GLAVNO PRANJE","BASIC",6.5],
+["GLAVNO PRANJE","SURF",3],
+["GLAVNO PRANJE","OXYGEN",7],
+["ISPIRANJE","SOFT",2]
+],
+
+"ODJEĆA U BOJI":[
+["PREDPRANJE","BASIC",5],
+["PREDPRANJE","SURF",2],
+["PREDPRANJE","CHLOR",0],
+["GLAVNO PRANJE","BASIC",6.5],
+["GLAVNO PRANJE","SURF",3],
+["GLAVNO PRANJE","OXYGEN",6],
+["ISPIRANJE","SOFT",5]
+],
+
+"ZAVJESE":[
+["PREDPRANJE","BASIC",0],
+["PREDPRANJE","SURF",2],
+["PREDPRANJE","CHLOR",0],
+["GLAVNO PRANJE","BASIC",3],
+["GLAVNO PRANJE","SURF",2],
+["GLAVNO PRANJE","OXYGEN",4],
+["ISPIRANJE","SOFT",5]
+],
+
+"OSJETLJIVO":[
+["PREDPRANJE","BASIC",0],
+["PREDPRANJE","SURF",2],
+["PREDPRANJE","CHLOR",0],
+["GLAVNO PRANJE","BASIC",3],
+["GLAVNO PRANJE","SURF",3],
+["GLAVNO PRANJE","OXYGEN",3],
+["ISPIRANJE","SOFT",5]
+]
+
+},
+
+products:{
+
+"BASIC":{kg:18.2,price:84.24},
+"SURF":{kg:15.5,price:94.49},
+"CHLOR":{kg:19,price:59.08},
+"OXYGEN":{kg:17,price:71.04},
+"SOFT":{kg:15,price:51.31}
+
+}
+
+};
+
+
+const KEY="kalkulatorDoziranjaV1";
+
+let db=JSON.parse(localStorage.getItem(KEY)||"null")||INITIAL;
+
+
+function save(){
+
+localStorage.setItem(KEY,JSON.stringify(db));
+
+document.getElementById("saved").textContent=
+"Spremljeno na uređaj ✓";
+
+}
+
+
+function euro(n){
+
+return n.toLocaleString("hr-HR",{
+minimumFractionDigits:2,
+maximumFractionDigits:2
+})+" €";
+
+}
+
+
+function programs(){
+
+return Object.keys(db.programs);
+
+}
+
+
+function pricePerG(p){
+
+return db.products[p].price/(db.products[p].kg*1000);
+
+}
+
+
+function renderProg(){
+
+prog.innerHTML=programs()
+.map(p=>`<option>${p}</option>`)
+.join("");
+
+renderCalc();
+renderRetro();
+
+}
+
+
+function calcData(){
+
+let p=prog.value;
+
+let c=+cap.value||0;
+
+let d=Math.min(
+100,
+Math.max(0,+disc.value||0)
+);
+
+let rows=db.programs[p]||[];
+
+let full=0;
+let total=0;
+
+let out=rows.map(([ph,pr,dose])=>{
+
+let g=dose*c;
+
+let cost=g*pricePerG(pr);
+
+total+=g;
+full+=cost;
+
+return{
+ph,
+pr,
+dose,
+g,
+cost
+};
+
+});
+
+return{
+out,
+total,
+full,
+d
+};
+
+}
+
+
+function renderCalc(){
+
+let x=calcData();
+
+grams.textContent=x.total.toFixed(1)+" g";
+
+full.textContent=euro(x.full);
+
+discval.textContent=
+euro(x.full*x.d/100);
+
+pay.textContent=
+euro(x.full*(1-x.d/100));
+
+
+calcRows.innerHTML=x.out.map(r=>`
+
+<tr>
+
+<td>
+${r.ph}<br>
+<span class="pill">${r.pr}</span>
+</td>
+
+<td>${r.dose}</td>
+
+<td>${r.g.toFixed(1)} g</td>
+
+<td>${euro(r.cost)}</td>
+
+</tr>
+
+`).join("");
+
+
+calcNote.innerHTML=
+x.d===100
+?'<div class="warn">Popust 100% — ciklus je bez naplate.</div>'
+:"";
+
+}
+
+
+function renderRetro(){
+
+retroInputs.innerHTML=programs()
+.map(p=>`
+
+<div class="metric">
+
+<span>${p}</span>
+
+<input
+data-retro="${p}"
+type="number"
+min="0"
+step="1"
+value="0"
+style="max-width:130px;text-align:right">
+
+</div>
+
+`)
+.join("");
+
+
+document.querySelectorAll("[data-retro]")
+.forEach(e=>
+e.addEventListener("input",renderRetroCalc)
+);
+
+renderRetroCalc();
+
+}
+
+
+function renderRetroCalc(){
+
+let totals=
+Object.fromEntries(
+Object.keys(db.products).map(p=>[p,0])
+);
+
+
+document.querySelectorAll("[data-retro]")
+.forEach(e=>{
+
+let n=+e.value||0;
+
+let p=e.dataset.retro;
+
+let c=+cap.value||0;
+
+(db.programs[p]||[]).forEach(
+([ph,pr,dose])=>{
+totals[pr]+=dose*c*n/1000;
+}
+);
+
+});
+
+
+let total=0;
+
+
+retroRows.innerHTML=
+Object.entries(totals)
+.map(([p,kg])=>{
+
+total+=kg;
+
+let pack=db.products[p].kg;
+
+return`
+
+<tr>
+
+<td>${p}</td>
+
+<td>${kg.toFixed(3)}</td>
+
+<td>${(kg/pack).toFixed(2)}</td>
+
+<td>${Math.ceil(kg/pack)}</td>
+
+</tr>
+
+`;
+
+})
+.join("");
+
+
+retroTotal.textContent=
+total.toFixed(3)+" kg";
+
+}
+
+
+function renderSettings(){
+
+productSettings.innerHTML=
+Object.entries(db.products)
+.map(([p,v])=>`
+
+<div class="card"
+style="box-shadow:none;border:1px solid #eee">
+
+<strong>${p}</strong>
+
+<div class="grid" style="margin-top:10px">
+
+<div>
+
+<label>Pakiranje (kg)</label>
+
+<input
+data-pkg="${p}"
+type="number"
+step="0.1"
+value="${v.kg}">
+
+</div>
+
+<div>
+
+<label>Cijena (€)</label>
+
+<input
+data-price="${p}"
+type="number"
+step="0.01"
+value="${v.price}">
+
+</div>
+
+</div>
+
+</div>
+
+`)
+.join("");
+
+
+doseSettings.innerHTML=
+programs()
+.map(p=>`
+
+<div class="card"
+style="box-shadow:none;border:1px solid #eee">
+
+<strong>${p}</strong>
+
+${(db.programs[p]||[])
+.map((r,i)=>`
+
+<div class="metric">
+
+<span>${r[0]} — ${r[1]}</span>
+
+<input
+data-dose="${p}|${i}"
+type="number"
+min="0"
+step="0.1"
+value="${r[2]}"
+style="max-width:100px;text-align:right">
+
+</div>
+
+`)
+.join("")}
+
+</div>
+
+`)
+.join("");
+
+
+document.querySelectorAll("[data-pkg]")
+.forEach(e=>
+
+e.addEventListener("change",()=>{
+
+db.products[e.dataset.pkg].kg=
++e.value||0;
+
+save();
+
+renderCalc();
+renderRetro();
+
+})
+
+);
+
+
+document.querySelectorAll("[data-price]")
+.forEach(e=>
+
+e.addEventListener("change",()=>{
+
+db.products[e.dataset.price].price=
++e.value||0;
+
+save();
+
+renderCalc();
+
+})
+
+);
+
+
+document.querySelectorAll("[data-dose]")
+.forEach(e=>
+
+e.addEventListener("change",()=>{
+
+let [p,i]=e.dataset.dose.split("|");
+
+db.programs[p][+i][2]=
++e.value||0;
+
+save();
+
+renderCalc();
+renderRetro();
+
+})
+
+);
+
+}
+
+
+document.querySelectorAll(".tabs button")
+.forEach(b=>
+
+b.onclick=()=>{
+
+document.querySelectorAll(".tabs button")
+.forEach(x=>x.classList.remove("active"));
+
+b.classList.add("active");
+
+document.querySelectorAll("section")
+.forEach(s=>s.classList.add("hidden"));
+
+document
+.getElementById(b.dataset.tab)
+.classList.remove("hidden");
+
+if(b.dataset.tab==="settings")
+renderSettings();
+
+}
+
+);
+
+
+[cap,prog,disc]
+.forEach(e=>
+
+e.addEventListener("input",()=>{
+
+renderCalc();
+renderRetroCalc();
+
+})
+
+);
+
+
+document.getElementById("reset")
+.onclick=()=>{
+
+db=JSON.parse(JSON.stringify(INITIAL));
+
+save();
+
+renderProg();
+
+renderSettings();
+
+};
+
+
+renderProg();
+
+
+if("serviceWorker" in navigator){
+
+navigator.serviceWorker.register("sw.js");
+
+}
+
+</script>
+
+</body>
+</html>
