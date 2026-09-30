@@ -1,0 +1,9 @@
+{
+  "name": "Kalkulator doziranja",
+  "short_name": "Kalkulator",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f4f6f8",
+  "theme_color": "#0b5cff",
+  "description": "Offline kalkulator doziranja za praonice"
+}
